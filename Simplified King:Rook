@@ -1,0 +1,750 @@
+
+
+# import required module
+import chess
+import random
+
+import random
+import math
+import statistics
+from tabulate import tabulate
+
+# create board object
+#board=chess.Board()
+board = chess.Board("1R6/8/1K6/8/5k2/8/8/8 w - - 25 25")
+
+
+def moveGenerator(board):
+    file_names = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
+    rank_names = ['1', '2', '3', '4', '5', '6', '7', '8']
+    rook_moves = []
+    king_moves = []
+    # same letter
+    rook_file_moves = []
+    rook_file_left = []
+    rook_file_check_move = []
+    rook_file_right = []
+    #same number
+    rook_rank_moves = []
+    rook_rank_up = []
+    rook_rank_check_move = []
+    rook_rank_down = []
+
+    king_square_index = board.king(chess.BLACK)
+    king_square_name = chess.square_name(king_square_index)
+
+    #makes legal moves a parseable list
+    legal_moves = [
+        board.san(move)
+        for move in board.legal_moves
+    ]
+    # get the current square index of the black king
+    white_king_square_index = board.king(chess.WHITE)
+#    get the current square name of the black king
+    white_king_square_name = chess.square_name(white_king_square_index)
+
+    # display chess board
+    print(legal_moves)
+    final_rook_rank_moves = []
+    final_rook_file_moves = []
+    final_king_rank_moves = []
+    final_king_file_moves = []
+    final_king_diagonal_moves = []
+
+    #print(board)
+    #im changing the rook to a queen for now, gotta change it back
+    for i in legal_moves:
+        if "R" in i:
+            rook_moves.append(i)
+        if "K" in i:
+            king_moves.append(i)
+
+    if len(rook_moves) > 0:
+        file_one = rook_moves[-1][1]
+        rank_one = rook_moves[-1][2]
+        count = 1
+        for i in rook_moves:
+            #if file same as one behind or before
+            if i[1] == (rook_moves[count - 2][1]) or i[1] == (rook_moves[count % len(rook_moves)][1]):
+                rook_file_moves.append(i)
+            
+            if i[2] == (rook_moves[count - 2][2]) or i[2] == (rook_moves[count % len(rook_moves)][2]):
+                rook_rank_moves.append(i)
+                        
+            count += 1
+
+        if len(rook_file_moves) < 2: # in case there's only one legal move on a file
+            for i in rook_moves:
+                if i not in rook_rank_moves:
+                    rook_file_moves.append(i)
+
+        if len(rook_rank_moves) < 2:
+            for i in rook_moves:
+                if i not in rook_file_moves:
+                    rook_rank_moves.append(i)
+        
+
+        fileList = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
+        #the down and left up and rights are switched but whatever
+        for i in rook_rank_moves:
+            if "+" in i:
+                rook_rank_check_move.append(i)
+            elif int(fileList.index(i[1])) < int(fileList.index(king_square_name[0])) + 1: # if rank less than king's rank
+                print(int(i[2]), int(king_square_name[1]))
+                rook_rank_down.append(i) 
+            else: # if rank less than king's rank
+                print(int(i[2]), int(king_square_name[1]))
+                rook_rank_up.append(i) 
+
+        for i in rook_file_moves:
+            if "+" in i:
+                rook_file_check_move.append(i)
+            elif int(i[2]) > int(king_square_name[1]): # if rank less than king's rank
+                rook_file_left.append(i) 
+            else: # if rank less than king's rank
+                rook_file_right.append(i) 
+
+    if len (king_moves) > 0: 
+        final_king_moves = []
+        for i in king_moves:
+            if i[2] == white_king_square_name[1]:
+                final_king_rank_moves.append(i)
+            elif i[1] == white_king_square_name[0]:
+                final_king_file_moves.append(i)
+            else:
+                final_king_diagonal_moves.append(i)
+        
+        if len(final_king_rank_moves) == 1: #if there's only one move in that direction, now there isn't
+            final_king_rank_moves.append(final_king_rank_moves[0])
+        if len(final_king_file_moves) == 1:
+            final_king_file_moves.append(final_king_file_moves[0])
+        while len (final_king_diagonal_moves) < 4:
+            if len(final_king_diagonal_moves) > 0:
+                final_king_diagonal_moves.append(final_king_diagonal_moves[0]) # this shouldn't get stuck, there should always be a diagonal move
+            else: 
+                final_king_diagonal_moves.append(king_moves[0])
+        if len(final_king_rank_moves) == 0: 
+            for i in range(2):
+                final_king_rank_moves.append(final_king_diagonal_moves[0])
+        if len(final_king_file_moves) == 0:
+            for i in range(2):
+                final_king_file_moves.append(final_king_diagonal_moves[0])
+        
+        final_king_moves = final_king_rank_moves + final_king_file_moves + final_king_diagonal_moves
+        king_moves = final_king_moves
+
+            
+    # need some failsafe in the very unlikely case that there's only one or two moves the rook can make
+
+        #formats output to be returned:
+        # need a failsafe in case there's no moves above or below
+        
+        if len(rook_rank_up) == 0:
+            rook_rank_up = rook_rank_down[::-1] #maybe reverse these to match format
+        if len(rook_rank_down) == 0:
+            rook_rank_down = rook_rank_up[::-1]
+        if len(rook_file_left) == 0:
+            rook_file_left = rook_file_right[::-1]
+        if len(rook_file_right) == 0:
+            rook_file_right = rook_file_left[::-1]
+
+
+        print(rook_rank_check_move, rook_rank_up, rook_rank_down)
+        print(rook_file_check_move, rook_file_left, rook_file_right)
+        if len(rook_file_moves) > 0:
+            if len(rook_file_check_move) == 1:
+                final_rook_file_moves.append(rook_file_check_move[0])
+            else:
+                final_rook_file_moves.append(random.choice(rook_file_moves))
+            if len(rook_file_left) > 0:
+                for i in range (7 - len(rook_file_left)): # stretches out list by replicating squares farthest from king
+                    final_rook_file_moves.append(rook_file_left[0])
+                for i in rook_file_left:
+                    final_rook_file_moves.append(i)
+            if len(rook_file_right) > 0:
+                for i in range (7 - len(rook_file_right)): # stretches out list by replicating squares farthest from king
+                    final_rook_file_moves.append(rook_file_right[-1])
+                for i in rook_file_left:
+                    final_rook_file_moves.append(i)
+
+        # same stuff for rank
+        if len(rook_rank_moves) > 0:
+            if len(rook_rank_check_move) == 1:
+                final_rook_rank_moves.append(rook_rank_check_move[0])
+            else:
+                final_rook_rank_moves.append(random.choice(rook_rank_moves))
+            if len(rook_rank_up) > 0:
+                for i in range (7 - len(rook_rank_up)): # stretches out list by replicating squares farthest from king
+                    final_rook_rank_moves.append(rook_rank_up[0])
+                for i in rook_rank_up:
+                    final_rook_rank_moves.append(i)
+            if len(rook_rank_down) > 0:
+                for i in range (7 - len(rook_rank_down)): # stretches out list by replicating squares farthest from king
+                    final_rook_rank_moves.append(rook_rank_down[-1])
+                for i in rook_rank_down:
+                    final_rook_rank_moves.append(i)
+
+    #final length should be 15 bits for the file moves and 15 bits for the rank moves
+    #this means I need to expand the binary string lengths
+
+    #print(rook_moves)
+    #print(rook_file_moves)
+    #print(rook_rank_moves)
+    #print(king_moves)
+    output_list = []
+    output_list.append(final_rook_file_moves)
+    output_list.append(final_rook_rank_moves)
+    output_list.append(king_moves)
+    return(output_list)
+
+def fitnessTestOutdated(board): # tests fitness, must be used when it's black's turn
+    rawFitness = 0
+    legal_moves = [
+        board.san(move)
+        for move in board.legal_moves
+    ]
+    for i in legal_moves:
+        board.push_san(i)
+        inner_legal_moves = [
+            board.san(move)
+            for move in board.legal_moves
+        ]
+        rawFitness += len(inner_legal_moves)
+        board.pop() # this should undo the last move, allowing each move to be checked
+
+    if board.result() == "1/2-1/2":
+        rawFitness = 176
+
+    #else code is a test
+   # elif board.is_checkmate() == True:
+   #     rawFitness = 0
+    
+  #  elif board.is_stalemate() == True:
+   #     rawFitness = 100
+    
+   # else:
+      #  rawFitness = 170
+
+    rawFitness = 176 - rawFitness
+    if rawFitness == 0:
+        rawFitness = 1
+    return rawFitness
+    #if i need to make higher fitness values better, this could be done by subtracting fitness from 176
+
+def fitnessTest(board):
+    parsableBoard = board.fen()
+    parsableBoard = parsableBoard.split()
+    narrowedParsableBoard = parsableBoard[0].split('/')
+    fitness = 64
+    kingRank = 0
+    rookRank = 0
+    for i in range(len(narrowedParsableBoard)):
+        if 'k' in narrowedParsableBoard[i]:
+            kingRank = i
+        if 'R' in narrowedParsableBoard[i]:
+            rookRank = i
+
+    subtractFitness = 0
+    if rookRank < kingRank:
+        for i in range(0, rookRank):
+            subtractFitness += 8
+        subtractFitness += 8
+    elif kingRank < rookRank:
+        for i in range(rookRank, 7): #maybe change this to 8
+            subtractFitness += 8
+        subtractFitness += 8
+    
+    else: 
+        subtractFitness + 8
+    
+    rookLeftSum = 0
+    rookRightSum = 0
+    kingLeftSum = 0
+    kingRightSum = 0
+    print(subtractFitness)
+    #below code doesn't work if they are on the same rank
+
+    if rookRank != kingRank:
+        switched = False
+        for ch in narrowedParsableBoard[rookRank]:
+            if ch == 'K': # makes it so a king in the way does not get in the way of fitness
+                if switched == False:
+                    rookLeftSum += 1
+                elif switched == True:
+                    rookRightSum += 1
+            elif ch == 'R':
+                switched = True
+            else: 
+                if switched == False:
+                    rookLeftSum += int(ch)
+                elif switched == True:
+                    rookRightSum += int(ch)
+
+        switched = False
+        for ch in narrowedParsableBoard[kingRank]:
+            if ch == 'K': # makes it so a king in the way does not get in the way of fitness
+                if switched == False:
+                    kingLeftSum += 1
+                elif switched == True:
+                    kingRightSum += 1
+            elif ch == 'k':
+                switched = True
+            else: 
+                if switched == False:
+                    kingLeftSum += int(ch)
+                elif switched == True:
+                    kingRightSum += int(ch)
+
+    print(kingLeftSum, rookLeftSum)
+    if kingLeftSum > rookLeftSum:
+        subtractFitness += ((rookLeftSum + 1) * (8 - (subtractFitness/8)))
+    elif kingLeftSum < rookLeftSum:
+        subtractFitness += ((rookRightSum + 1) * (8 - (subtractFitness/8)))
+    else:
+        subtractFitness = 8
+    print(fitness - subtractFitness)
+    return (subtractFitness)
+        
+
+            
+
+
+    #king_square_index = board.king(chess.BLACK)
+    #king_square_name = chess.square_name(king_square_index)
+
+
+#below is all the stuff from the homeworks, imported 
+
+def pseudorandom(number1, number2): # just uses random library to choose a number
+    return(random.randint(number1, number2))
+
+test_list = []
+for i in range(1000):
+    test_list.append(pseudorandom(9, 12))
+    test_list.sort()
+
+
+# 2
+def crossover(parent1:str, parent2:str, crossingPoint:int)->tuple:
+    if (crossingPoint < 0) or (crossingPoint > len(parent1)):
+        return("ERROR: Illegal value for crossingPoint")
+    else:
+        a, b = parent1[:crossingPoint+1], parent1[crossingPoint+1:]
+        c, d = parent2[:crossingPoint+1], parent2[crossingPoint+1:]
+        return (a+d, c+b) # returns crossover
+print(crossover("011101011", "000110100", 3))
+print(crossover("111111111", "000000000", -1))
+
+
+def crossoverMulti(parent1:str, parent2:str, crossingNumber:int)->tuple:
+    point_list = []
+    #FOR TOMORROW, ADD CODE THAT CHECKS IF THERE'S TOO MANY POINTS
+    while len(point_list) != crossingNumber:
+        newNumber = pseudorandom(1, (len(parent1) - 1)) # made it so all the points are within the string
+        if newNumber not in point_list:
+            point_list.append(newNumber)
+   # print(point_list)
+            #above prints crossover points when not commented out
+    point_list.append(len(parent1))
+    point_list.sort()
+    lastValue = 0
+    lastString = 0
+    outputString = ''
+    outputString2 = ''
+    for i in point_list:
+        if lastString == 0: #this varaiable swaps which string each list takes from each timem
+            outputString += parent1[lastValue:i]
+            outputString2 += parent2[lastValue:i]
+            lastString = 1
+        elif lastString == 1:
+            outputString += parent2[lastValue:i]
+            outputString2 += parent1[lastValue:i]
+            lastString = 0
+        lastValue = i
+    return(outputString, outputString2)
+
+print(crossoverMulti("000000000", "111111111", 3))
+print(crossoverMulti("000000000", "111111111", 4))
+
+#3
+def mutation(s:str, mutationPoint:int, pm:float)->str:
+    output = ''
+    count = 0
+    for i in s:
+        if count == mutationPoint: # at the character indicated by the mutation point
+            if random.random() < pm: # picks a random value from 0-1 and checks if it's within pm
+                if i == '1': #switches values
+                    i = '0'
+                elif i == '0':
+                    i = '1'
+        output += i
+        count += 1
+    return output
+
+print(mutation('00100', 2, 1))
+
+
+    
+def decode(input): # converts int to bin string
+    return str((bin(input))[2:])
+
+def encode(input): # converts bin string to int 
+    return (int(input, 2))
+
+print(encode('101011'))
+print(decode(30))
+
+
+#codeString = "11001010000001010"
+
+def opposition(boardList): 
+    oppositionTrue = False
+    kingRank = 0
+    for i in range (len(boardList)):
+        if 'K' in boardList[i]:
+            kingRank = i
+            break
+    targetEnemyKing = boardList[kingRank].replace("K", "k")
+    #if kingRank > 1:
+     #   if boardList[kingRank - 2] == targetEnemyKing:
+      #      oppositionTrue = True
+    if kingRank < 6:
+        if boardList[kingRank + 2] == targetEnemyKing:
+            oppositionTrue = True
+
+    return oppositionTrue
+
+def nexttoRank(boardList):
+    #despite the title im chanigng this to only be when rook is above king
+    #same with opposition
+    nexttoRankTrue = False
+    rookRank = 0
+    for i in range (len(boardList)):
+        if 'R' in boardList[i]:
+            rookRank = i
+            break
+    #if rookRank > 0:
+     #   if 'k' in boardList[rookRank - 1]:
+      #      nexttoRankTrue = True
+    if rookRank < 7:
+        if 'k' in boardList[rookRank + 1]:
+            nexttoRankTrue = True
+
+    return nexttoRankTrue
+
+def kingnexttoRook(boardList):
+    kingnexttoRookTrue = False
+    kingRank = 0
+    for i in range (len(boardList)):
+        if 'K' in boardList[i]:
+            kingRank = i
+            break
+    if kingRank < 7:
+        if 'R' in boardList[kingRank + 1]:
+            nexttoRankTrue = True
+
+def rookInDanger(boardList):
+    rookInDangerTrue = False
+    boardString = ''
+    for i in boardList:
+        boardString += i + '/'
+    boardString = boardString[:-1]
+    boardString += "  b - - 0 0"
+    #print(boardString)
+    board = chess.Board(boardString)
+    availableMoves = moveGenerator(board)
+    #print(availableMoves)
+    #blackList = random.choice(availableMoves)
+    #why did I write the above line to begin with??
+    blackList = availableMoves[2]
+    print ('available moves:', availableMoves, blackList)
+    # print(blackList)
+    if len(blackList) != 0:
+        for i in blackList:
+            if "x" in i:
+                rookInDangerTrue = True
+
+    return rookInDangerTrue
+    
+    
+#used to be 7 for rook moves, 1 for rook vs king, 1 for rank vs file, 8 for king moves
+#totalling 17
+#now rook moves are 15 so totalling 25
+
+def kingAi(board): # only call this if it's black's turn
+    letterList = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
+    king_square_index = board.king(chess.BLACK)
+    king_square_name = chess.square_name(king_square_index)
+    availableMoves = moveGenerator(board)
+    blackList = availableMoves[2]
+    narrowedList = []
+    finalList = []
+    print('availablemoves2:', availableMoves, blackList)
+    # print(blackList)
+    if len(blackList) == 0:
+        return None
+    else:
+        for i in blackList:
+            if "x" in i:
+                return i
+        if int(king_square_name[1]) < 5:
+            for i in blackList:
+                if int(i[2]) > int(king_square_name[1]):
+                    narrowedList.append(i)
+            if len(narrowedList) == 0:
+                for i in blackList:
+                    if int(i[2]) == int(king_square_name[1]):
+                        narrowedList.append(i)
+        else:
+            for i in blackList:
+                if int(i[2]) < int(king_square_name[1]):
+                    narrowedList.append(i)
+            if len(narrowedList) == 0:
+                for i in blackList:
+                    if int(i[2]) == int(king_square_name[1]):
+                        narrowedList.append(i)
+        if len(narrowedList) == 0:
+            narrowedList.append(blackList[0])
+        if letterList.index(king_square_name[0]) < 4:
+            for i in narrowedList:
+                if int(letterList.index(i[1])) > int(letterList.index(king_square_name[0])):
+                    finalList.append(i)
+            if len(finalList) == 0:
+                for i in narrowedList:
+                    if int(letterList.index(i[1])) == int(letterList.index(king_square_name[0])):
+                        finalList.append(i)
+        else:
+            for i in narrowedList:
+                if int(letterList.index(i[1])) < int(letterList.index(king_square_name[0])):
+                    finalList.append(i)
+            if len(finalList) == 0:
+                for i in narrowedList:
+                    if int(letterList.index(i[1])) == int(letterList.index(king_square_name[0])):
+                        finalList.append(i)
+        if len(finalList) == 0:
+            finalList.append(narrowedList[0])
+
+        #print(blackList, narrowedList, finalList)
+        return finalList[0]
+
+
+
+
+
+
+
+def testFitness(codeString):
+    # i need a combination now where there's a long string but
+    #if the special conditions are met it goes to the short string
+    board = chess.Board("2R5/8/1K6/8/5k2/8/8/8 w - - 0 0")
+    board = chess.Board("8/8/5K2/7R/5k2/8/8/8 w - - 0 0")
+    
+    # for testing escapes
+    #board = chess.Board("8/8/1K6/6R1/5k2/8/8/8 w - - 0 0")
+    boardList = []
+    baseCount = 0
+    bestFitness = 1
+    for n in range(49): #keeps iterating over same string until done
+        newFitness = 0
+        count = 0
+        count += baseCount
+        availableMoves = moveGenerator(board)
+        print(availableMoves)
+        narrowedMoves = []
+        finalNarrowedMoves = []
+        parsableBoard = board.fen()
+        parsableBoard = parsableBoard.split()
+        #minusCount = 0
+        print(codeString[count])
+        if codeString[count] == '1':
+            print("rook")
+            count += 1
+          #  minusCount += 1
+            if codeString[count] == '0':
+                narrowedMoves = availableMoves[0]
+                #file
+            else:
+                narrowedMoves = availableMoves[1]
+                #rank
+            listSlice = codeString[count:count + 4] 
+            count += 1
+            print('listSlice:', encode(listSlice))
+            #this skews the formula slightly but I've gotta do it
+            if encode(listSlice) == 15:
+                listSlice = decode(14)
+            if len(narrowedMoves) != 0:
+                finalNarrowedMoves.append(narrowedMoves[encode(listSlice)])
+        elif codeString[count] == '0': 
+            print('king')
+            narrowedMoves = availableMoves[2]
+            #count -= minusCount #undoes rook incrementing OUTDATED
+            # i know this is stupid but i just want to get it to work
+            count += 5 #bypasses the rook check and the 4 rook values
+            listSlice = codeString[count:count + 3] # 
+            finalNarrowedMoves.append(availableMoves[2][encode(listSlice)])
+            
+        
+        print(narrowedMoves)
+        print(finalNarrowedMoves)
+        if len(finalNarrowedMoves) == 0:
+            if len(narrowedMoves) == 0:
+                if len(availableMoves[2]) > 0: # picks a king move if there were no rook file/rank moves
+                    choice = availableMoves[2][0]
+                else:
+                    break
+            else:
+                choice = narrowedMoves[0]
+        else:
+            choice = finalNarrowedMoves[0]
+        print("choice", choice)
+        board.push_san(choice) #white moves
+        boardList.append(board)
+        print(board)
+        print('========')
+       # newFitness = (fitnessTest(board))
+       # if newFitness > bestFitness:
+         #   bestFitness = newFitness
+        availableMoves = moveGenerator(board)
+        #print(availableMoves)
+       # blackList = random.choice(availableMoves)
+        blackList = availableMoves[2]
+        #print('availablemoves2:', availableMoves, blackList)
+        # print(blackList)
+        if len(blackList) == 0:
+            break
+        else:
+            choice =  kingAi(board)
+            print(choice)
+            print(n)
+            if n < 49: # dont move for black on last turn
+                board.push_san(choice)#black moves
+                boardList.append(board)
+        baseCount += 9
+        print(board)
+        print('========')
+
+   # for i in boardList:
+    #    print('========')
+      #  print(i)
+    
+    #checks to see if it's not a draw
+    #if fitnessTest(board) == 1:
+    #    bestFitness = 1
+    return (fitnessTest(board), boardList)
+
+def testFitness2(input):
+    z = encode(input)/1073741823
+    return (((-112/3) * (z**4)) + (72 * (z**3)) - ((131/3) * (z**2)) + (9 * z))
+
+def testFitness3(input):
+    z = encode(input)/1073741823
+    return ((2 * (math.cos(z))) + (math.sin(2*z)))
+    
+
+def SGA(inputList, oldfitnessList, crossoverProb, mutationProb, selectionType, crossoverNumber):
+    outputList = []
+    outputFitnessList = []
+    sumFitness = 0
+    selectionsList = []
+    previous = 0
+    fitnessList = []
+    # Fitness proportional below
+    if selectionType == 2:
+        # linear rank
+        s = 2
+        u = len(oldfitnessList)
+        count = 0   
+        for index, value in sorted(enumerate(oldfitnessList), key=lambda x:x[1]): # for value in sorted list
+            oldfitnessList[index] = (((2 - s)/u) + ((2 * count * (s - 1))/(u * (u - 1)))) #update value in original list
+            count += 1
+    # exponential ranking below
+    elif selectionType == 3:
+        c = 0.5
+        u = len(oldfitnessList)
+        count = 0
+        for index, value in sorted(enumerate(oldfitnessList), key=lambda x:x[1]): # for value in sorted list
+            oldfitnessList[index] = ((c * ((1-c) ** (u - count - 1)))/value * (c * ((1 - c) ** (u - count - 1)))) #update value in original list
+            count += 1
+    #does this for everything regardless of method selected
+    sumFitness = sum(oldfitnessList)
+    for i in oldfitnessList: # updates list to be in roulette format
+            newValue = previous + (i/sumFitness)
+            fitnessList.append(newValue)
+            previous = newValue
+
+    while len(outputList) < len(inputList):
+        selectionsList = []
+        for i in range (2):
+            tempList = []
+            selection = random.random() #generates random number no greater than greatest fitness, scaled (1)
+            for i in fitnessList:
+                if i >= selection:
+                    # adds first number to be greater than selection to list
+                    break #then stops checking
+            selectionsList.append(inputList[fitnessList.index(i)]) # adds actual value to selections
+        if random.random() < crossoverProb:
+            outputString = crossoverMulti(selectionsList[0], selectionsList[1], crossoverNumber)
+        else:
+            outputString = selectionsList
+        outputList.append(mutation(outputString[0], pseudorandom(0, len(outputString[0])), mutationProb)) #adds it to list
+        outputList.append(mutation(outputString[1], pseudorandom(0, len(outputString[1])), mutationProb))        
+    for i in outputList:
+        #this makes it more complex
+        #but also should help get rid of lucky high fitnesses
+        fitnessChooser = []
+        for j in range (1): # changing to 1 and going to make a king ai instead
+            fitnessChooser.append(testFitness(i)[0])
+        fitnessChooser.sort()
+        outputFitnessList.append(fitnessChooser[0]) #change the testFitness function depending on function used
+    return(outputList, outputFitnessList, max(outputFitnessList), statistics.mean(outputFitnessList), min(outputFitnessList), statistics.stdev(outputFitnessList))
+
+
+print('Enter population size:')
+populationSize = int(input())
+print('Enter mutation rate:')
+mutationRate = float(input())
+print('Enter crossover rate:')
+crossoverRate = float(input())
+print('Enter generation number:')
+maxGenerations = int(input())
+print('Enter 1 for fitness proportional ranking, 2 for linear ranking, or 3 for exponential ranking')
+rankingType = int(input())
+print('Enter number of crossover points:')
+crossoverNumber = int(input())
+
+
+
+n = 10
+population = []
+fitnessList = []
+for i in range (populationSize):
+    emptyString = ''
+    for i in range(450): # i know this is grossly complex but i just needed to make it work right now
+        emptyString += (decode(pseudorandom(0, 1))) # generates random numbers
+    population.append(emptyString)
+for i in population:
+    fitnessList.append(testFitness(i)[0]) #tests their fitness
+print(population)
+
+outputList =[]
+generationNumber = 0
+for i in range (maxGenerations):
+   # print(max(fitnessList))
+    #print(population, fitnessList)
+    output = (SGA(population, fitnessList, crossoverRate, mutationRate, rankingType, crossoverNumber))
+    innerList = [generationNumber, output[2], output[3], output[4], output[5]]
+    outputList.append(innerList)
+    population = output[0]
+    #print(population)
+    fitnessList = output [1]
+    generationNumber += 1
+
+boardList = []
+print(testFitness(population[fitnessList.index(max(fitnessList))])[0])
+boardList = (testFitness(population[fitnessList.index(max(fitnessList))])[1])
+#for i in boardList:
+   # print('========')
+   # print(i)
+print('optimal value is',encode(population[fitnessList.index(max(fitnessList))]), "in binary:", population[fitnessList.index(max(fitnessList))])
+print(tabulate(outputList, headers=['Generation Number', 'Best fitness', 'Average fitness', 'Worst fitness', 'Fitness standard deviation']))   
+
